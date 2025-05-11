@@ -31,15 +31,12 @@ public class NoteApp extends JFrame {
     private static final String NOTES_DIR = "notes";  // Directory to store note files
     private static final String[] CATEGORIES = {"All", "Work", "Personal", "Ideas", "Tasks", "Other"};
     
-    // Modern color scheme
-    private static final Color BACKGROUND_COLOR = new Color(250, 250, 250);
-    private static final Color ACCENT_COLOR = new Color(41, 128, 185);
-    private static final Color SECONDARY_COLOR = new Color(52, 152, 219);
-    private static final Color TEXT_COLOR = new Color(44, 62, 80);
-    private static final Color BORDER_COLOR = new Color(236, 240, 241);
-    private static final Color HOVER_COLOR = new Color(236, 240, 241);
-    private static final Color SELECTED_COLOR = new Color(41, 128, 185);
-    private static final Color SELECTED_TEXT_COLOR = Color.WHITE;
+    // Modern color scheme - non-final for theme switching
+    private static Color BACKGROUND_COLOR = new Color(250, 250, 250);
+    private static Color ACCENT_COLOR = new Color(41, 128, 185);
+    private static Color TEXT_COLOR = new Color(44, 62, 80);
+    private static Color BORDER_COLOR = new Color(236, 240, 241);
+    private static Color HOVER_COLOR = new Color(236, 240, 241);
     
     // Modern fonts
     private static final Font MAIN_FONT = new Font("Segoe UI", Font.PLAIN, 14);
@@ -100,13 +97,13 @@ public class NoteApp extends JFrame {
             
             UIManager.put("ComboBox.background", Color.WHITE);
             UIManager.put("ComboBox.foreground", TEXT_COLOR);
-            UIManager.put("ComboBox.selectionBackground", SELECTED_COLOR);
-            UIManager.put("ComboBox.selectionForeground", SELECTED_TEXT_COLOR);
+            UIManager.put("ComboBox.selectionBackground", ACCENT_COLOR);
+            UIManager.put("ComboBox.selectionForeground", Color.WHITE);
             
             UIManager.put("List.background", Color.WHITE);
             UIManager.put("List.foreground", TEXT_COLOR);
-            UIManager.put("List.selectionBackground", SELECTED_COLOR);
-            UIManager.put("List.selectionForeground", SELECTED_TEXT_COLOR);
+            UIManager.put("List.selectionBackground", ACCENT_COLOR);
+            UIManager.put("List.selectionForeground", Color.WHITE);
             
             UIManager.put("TextField.background", Color.WHITE);
             UIManager.put("TextField.foreground", TEXT_COLOR);
@@ -146,9 +143,9 @@ public class NoteApp extends JFrame {
         return area;
     }
 
-    private JButton createModernButton(String text, String icon, ActionListener listener) {
-        JButton button = new JButton(icon + " " + text);
-        button.setFont(BUTTON_FONT);
+    private JButton createActionButton(String text, ActionListener listener) {
+        JButton button = new JButton(text);
+        button.setFont(MAIN_FONT);
         button.setForeground(TEXT_COLOR);
         button.setBackground(Color.WHITE);
         button.setFocusPainted(false);
@@ -174,31 +171,116 @@ public class NoteApp extends JFrame {
         return button;
     }
 
-    private JPanel createModernPanel() {
-        JPanel panel = new JPanel();
+    private JPanel createRightPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBackground(BACKGROUND_COLOR);
-        panel.setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
+        
+        // Action buttons
+        JPanel buttonPanel = new JPanel(new GridLayout(6, 1, 5, 5));
+        buttonPanel.setBackground(BACKGROUND_COLOR);
+        
+        buttonPanel.add(createActionButton("New Note", e -> newNote()));
+        buttonPanel.add(createActionButton("Save", e -> saveNote()));
+        buttonPanel.add(createActionButton("Delete", e -> deleteNote()));
+        buttonPanel.add(createActionButton("Export", e -> exportNote()));
+        buttonPanel.add(createActionButton("Import", e -> importNote()));
+        buttonPanel.add(createActionButton("Settings", e -> showSettings()));
+        
+        panel.add(buttonPanel, BorderLayout.CENTER);
+        panel.add(dateLabel, BorderLayout.SOUTH);
+        
         return panel;
     }
 
-    private JScrollPane createModernScrollPane(Component view) {
-        JScrollPane scrollPane = new JScrollPane(view);
-        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
-        scrollPane.getViewport().setBackground(Color.WHITE);
-        return scrollPane;
+    private void showSettings() {
+        // Create settings dialog
+        JDialog settingsDialog = new JDialog(this, "Settings", true);
+        settingsDialog.setLayout(new BorderLayout(10, 10));
+        settingsDialog.getContentPane().setBackground(BACKGROUND_COLOR);
+        
+        // Settings panel
+        JPanel settingsPanel = new JPanel(new GridBagLayout());
+        settingsPanel.setBackground(BACKGROUND_COLOR);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        
+        // Font size setting
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        settingsPanel.add(new JLabel("Font Size:"), gbc);
+        gbc.gridx = 1;
+        JSpinner fontSizeSpinner = new JSpinner(new SpinnerNumberModel(14, 8, 24, 1));
+        settingsPanel.add(fontSizeSpinner, gbc);
+        
+        // Theme setting
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        settingsPanel.add(new JLabel("Theme:"), gbc);
+        gbc.gridx = 1;
+        JComboBox<String> themeCombo = new JComboBox<>(new String[]{"Light", "Dark"});
+        settingsPanel.add(themeCombo, gbc);
+        
+        // Buttons panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(BACKGROUND_COLOR);
+        JButton applyButton = new JButton("Apply");
+        JButton cancelButton = new JButton("Cancel");
+        
+        applyButton.addActionListener(e -> {
+            // Apply settings
+            int newSize = (Integer) fontSizeSpinner.getValue();
+            String theme = (String) themeCombo.getSelectedItem();
+            updateSettings(newSize, theme);
+            settingsDialog.dispose();
+        });
+        
+        cancelButton.addActionListener(e -> settingsDialog.dispose());
+        
+        buttonPanel.add(applyButton);
+        buttonPanel.add(cancelButton);
+        
+        settingsDialog.add(settingsPanel, BorderLayout.CENTER);
+        settingsDialog.add(buttonPanel, BorderLayout.SOUTH);
+        
+        settingsDialog.pack();
+        settingsDialog.setLocationRelativeTo(this);
+        settingsDialog.setVisible(true);
     }
 
-    private JComboBox<String> createModernComboBox(String[] items) {
-        JComboBox<String> comboBox = new JComboBox<>(items);
-        comboBox.setFont(MAIN_FONT);
-        comboBox.setBackground(Color.WHITE);
-        comboBox.setForeground(TEXT_COLOR);
-        comboBox.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(BORDER_COLOR, 1),
-            BorderFactory.createEmptyBorder(8, 12, 8, 12)
-        ));
-        comboBox.setPreferredSize(new Dimension(comboBox.getWidth(), COMPONENT_HEIGHT));
-        return comboBox;
+    private void updateSettings(int fontSize, String theme) {
+        // Update font size
+        Font newFont = new Font(MAIN_FONT.getName(), MAIN_FONT.getStyle(), fontSize);
+        noteArea.setFont(newFont);
+        titleField.setFont(newFont);
+        searchField.setFont(newFont);
+        noteList.setFont(newFont);
+        
+        // Update theme
+        if (theme.equals("Dark")) {
+            BACKGROUND_COLOR = new Color(30, 30, 30);
+            TEXT_COLOR = Color.WHITE;
+            BORDER_COLOR = new Color(60, 60, 60);
+        } else {
+            BACKGROUND_COLOR = new Color(250, 250, 250);
+            TEXT_COLOR = new Color(44, 62, 80);
+            BORDER_COLOR = new Color(236, 240, 241);
+        }
+        
+        // Update component colors
+        updateComponentColors();
+    }
+
+    private void updateComponentColors() {
+        getContentPane().setBackground(BACKGROUND_COLOR);
+        noteArea.setBackground(BACKGROUND_COLOR);
+        noteArea.setForeground(TEXT_COLOR);
+        titleField.setBackground(BACKGROUND_COLOR);
+        titleField.setForeground(TEXT_COLOR);
+        searchField.setBackground(BACKGROUND_COLOR);
+        searchField.setForeground(TEXT_COLOR);
+        noteList.setBackground(BACKGROUND_COLOR);
+        noteList.setForeground(TEXT_COLOR);
     }
 
     /**
@@ -244,8 +326,7 @@ public class NoteApp extends JFrame {
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING)
         ));
-        rightPanel.add(createActionButtons(), BorderLayout.CENTER);
-        rightPanel.add(createDateLabel(), BorderLayout.SOUTH);
+        rightPanel.add(createRightPanel(), BorderLayout.CENTER);
 
         mainPanel.add(leftPanel, BorderLayout.WEST);
         mainPanel.add(centerPanel, BorderLayout.CENTER);
