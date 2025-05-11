@@ -287,10 +287,9 @@ public class NoteApp extends JFrame {
      * Sets up the graphical user interface components and layout
      */
     private void setupUI() {
-        setTitle("Modern Note Taking App");
+        setTitle("Note Taking App");
         setSize(1200, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout(0, 0));
         getContentPane().setBackground(BACKGROUND_COLOR);
 
         initializeComponents();
@@ -298,7 +297,7 @@ public class NoteApp extends JFrame {
         JPanel mainPanel = createModernPanel();
         mainPanel.setLayout(new BorderLayout(PADDING, PADDING));
 
-        // Left panel with shadow
+        // Create panels
         JPanel leftPanel = createModernPanel();
         leftPanel.setLayout(new BorderLayout(PADDING, PADDING));
         leftPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -309,7 +308,6 @@ public class NoteApp extends JFrame {
         leftPanel.add(createCategoryPanel(), BorderLayout.CENTER);
         leftPanel.add(createModernScrollPane(noteList), BorderLayout.SOUTH);
 
-        // Center panel with shadow
         JPanel centerPanel = createModernPanel();
         centerPanel.setLayout(new BorderLayout(PADDING, PADDING));
         centerPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -319,14 +317,13 @@ public class NoteApp extends JFrame {
         centerPanel.add(createTitlePanel(), BorderLayout.NORTH);
         centerPanel.add(createModernScrollPane(noteArea), BorderLayout.CENTER);
 
-        // Right panel with shadow
         JPanel rightPanel = createModernPanel();
         rightPanel.setLayout(new BorderLayout(PADDING, PADDING));
         rightPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING)
         ));
-        rightPanel.add(createRightPanel(), BorderLayout.CENTER);
+        rightPanel.add(createActionButtons(), BorderLayout.CENTER);
 
         mainPanel.add(leftPanel, BorderLayout.WEST);
         mainPanel.add(centerPanel, BorderLayout.CENTER);
@@ -334,9 +331,9 @@ public class NoteApp extends JFrame {
         mainPanel.add(createStatusBar(), BorderLayout.SOUTH);
 
         add(mainPanel);
-        setJMenuBar(createModernMenuBar());
+        setJMenuBar(createMenuBar());
         setLocationRelativeTo(null);
-        setMinimumSize(new Dimension(1000, 700));
+        setMinimumSize(new Dimension(800, 600));
     }
 
     private void initializeComponents() {
@@ -373,13 +370,82 @@ public class NoteApp extends JFrame {
         underlineButton.setPreferredSize(buttonSize);
     }
 
+    private JPanel createModernPanel() {
+        JPanel panel = new JPanel();
+        panel.setBackground(BACKGROUND_COLOR);
+        panel.setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
+        return panel;
+    }
+
+    private JScrollPane createModernScrollPane(Component view) {
+        JScrollPane scrollPane = new JScrollPane(view);
+        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        return scrollPane;
+    }
+
+    private JComboBox<String> createModernComboBox(String[] items) {
+        JComboBox<String> comboBox = new JComboBox<>(items);
+        comboBox.setFont(MAIN_FONT);
+        comboBox.setBackground(Color.WHITE);
+        comboBox.setForeground(TEXT_COLOR);
+        comboBox.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(8, 12, 8, 12)
+        ));
+        comboBox.setPreferredSize(new Dimension(comboBox.getWidth(), COMPONENT_HEIGHT));
+        return comboBox;
+    }
+
+    private JButton createModernButton(String text, String icon, ActionListener listener) {
+        JButton button = new JButton(text + " " + icon);
+        button.setFont(MAIN_FONT);
+        button.setForeground(TEXT_COLOR);
+        button.setBackground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(8, 16, 8, 16)
+        ));
+        button.setPreferredSize(new Dimension(button.getWidth(), COMPONENT_HEIGHT));
+        
+        // Add hover effect
+        button.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(HOVER_COLOR);
+            }
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(Color.WHITE);
+            }
+        });
+        
+        button.addActionListener(listener);
+        return button;
+    }
+
+    private JPanel createActionButtons() {
+        JPanel panel = createModernPanel();
+        panel.setLayout(new GridLayout(5, 1, PADDING, PADDING));
+        
+        panel.add(createModernButton("New Note", "➕", e -> newNote()));
+        panel.add(createModernButton("Save", "💾", e -> saveNote()));
+        panel.add(createModernButton("Delete", "🗑️", e -> deleteNote()));
+        panel.add(createModernButton("Export", "📤", e -> exportNote()));
+        panel.add(createModernButton("Import", "📥", e -> importNote()));
+        
+        return panel;
+    }
+
     private JPanel createSearchPanel() {
         JPanel panel = createModernPanel();
         panel.setLayout(new BorderLayout(PADDING, 0));
         
         JLabel searchIcon = new JLabel("🔍");
         searchIcon.setFont(MAIN_FONT);
-        searchField = createModernTextField();
+        searchField = new JTextField();
+        searchField.setFont(MAIN_FONT);
         
         panel.add(searchIcon, BorderLayout.WEST);
         panel.add(searchField, BorderLayout.CENTER);
@@ -405,32 +471,12 @@ public class NoteApp extends JFrame {
         
         JLabel titleLabel = new JLabel("Title:");
         titleLabel.setFont(MAIN_FONT);
-        titleField = createModernTextField();
+        titleField = new JTextField();
+        titleField.setFont(MAIN_FONT);
         
         panel.add(titleLabel, BorderLayout.WEST);
         panel.add(titleField, BorderLayout.CENTER);
         return panel;
-    }
-
-    private JPanel createActionButtons() {
-        JPanel panel = createModernPanel();
-        panel.setLayout(new GridLayout(5, 1, PADDING, PADDING));
-        
-        panel.add(createModernButton("New Note", "➕", e -> newNote()));
-        panel.add(createModernButton("Save", "💾", e -> saveNote()));
-        panel.add(createModernButton("Delete", "🗑️", e -> deleteNote()));
-        panel.add(createModernButton("Export", "📤", e -> exportNote()));
-        panel.add(createModernButton("Import", "📥", e -> importNote()));
-        
-        return panel;
-    }
-
-    private JLabel createDateLabel() {
-        dateLabel = new JLabel();
-        dateLabel.setFont(MAIN_FONT.deriveFont(Font.ITALIC));
-        dateLabel.setForeground(TEXT_COLOR);
-        dateLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        return dateLabel;
     }
 
     private JPanel createStatusBar() {
@@ -449,7 +495,7 @@ public class NoteApp extends JFrame {
         return panel;
     }
 
-    private JMenuBar createModernMenuBar() {
+    private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         menuBar.setBackground(BACKGROUND_COLOR);
         menuBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR));
