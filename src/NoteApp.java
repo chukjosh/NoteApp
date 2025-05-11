@@ -1142,3 +1142,6 @@ class PlaceholderTextArea extends JTextArea {
         }
     }
 } 
+/**
+ * Finally, End of code :/
+ */
