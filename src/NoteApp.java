@@ -1,6 +1,7 @@
 package src;
 import javax.swing.*;
-
+import javax.swing.border.*;
+import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -22,7 +23,33 @@ public class NoteApp extends JFrame {
     private JTextField titleField;     // Text field for note title
     private JTextField searchField;    // Text field for searching notes
     private JLabel dateLabel;          // Label to show note dates
+    private JLabel statusLabel;        // Label to show application status
+    private JComboBox<String> categoryComboBox;  // Combo box for selecting note category
+    private JButton boldButton, italicButton, underlineButton;  // Formatting buttons
+    private JColorChooser colorChooser;  // Color chooser for text formatting
+    private JPanel toolbarPanel;        // Panel for toolbar buttons
     private static final String NOTES_DIR = "notes";  // Directory to store note files
+    private static final String[] CATEGORIES = {"All", "Work", "Personal", "Ideas", "Tasks", "Other"};
+    
+    // Modern color scheme
+    private static final Color BACKGROUND_COLOR = new Color(250, 250, 250);
+    private static final Color ACCENT_COLOR = new Color(41, 128, 185);
+    private static final Color SECONDARY_COLOR = new Color(52, 152, 219);
+    private static final Color TEXT_COLOR = new Color(44, 62, 80);
+    private static final Color BORDER_COLOR = new Color(236, 240, 241);
+    private static final Color HOVER_COLOR = new Color(236, 240, 241);
+    private static final Color SELECTED_COLOR = new Color(41, 128, 185);
+    private static final Color SELECTED_TEXT_COLOR = Color.WHITE;
+    
+    // Modern fonts
+    private static final Font MAIN_FONT = new Font("Segoe UI", Font.PLAIN, 14);
+    private static final Font HEADER_FONT = new Font("Segoe UI", Font.BOLD, 16);
+    private static final Font BUTTON_FONT = new Font("Segoe UI", Font.PLAIN, 13);
+    
+    // Modern dimensions
+    private static final int CORNER_RADIUS = 8;
+    private static final int PADDING = 12;
+    private static final int COMPONENT_HEIGHT = 36;
 
     /**
      * Constructor initializes the application and sets up the UI
@@ -31,77 +58,370 @@ public class NoteApp extends JFrame {
         notes = new ArrayList<>();
         setupUI();
         loadNotes();  // Load existing notes from the notes directory
+        setupKeyboardShortcuts();
+        setupModernLookAndFeel();
+    }
+
+    private void setupKeyboardShortcuts() {
+        // Global keyboard shortcuts
+        KeyStroke ctrlN = KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK);
+        KeyStroke ctrlS = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK);
+        KeyStroke ctrlD = KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK);
+        KeyStroke ctrlF = KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK);
+        KeyStroke escape = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+
+        getRootPane().registerKeyboardAction(e -> newNote(), ctrlN, JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e -> saveNote(), ctrlS, JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e -> deleteNote(), ctrlD, JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e -> searchField.requestFocus(), ctrlF, JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e -> clearSearch(), escape, JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
+
+    private void clearSearch() {
+        searchField.setText("");
+        updateNoteList();
+        noteArea.requestFocus();
+    }
+
+    private void setupModernLookAndFeel() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            
+            // Modern UI defaults
+            UIManager.put("Button.arc", CORNER_RADIUS);
+            UIManager.put("Component.arc", CORNER_RADIUS);
+            UIManager.put("ProgressBar.arc", CORNER_RADIUS);
+            UIManager.put("TextComponent.arc", CORNER_RADIUS);
+            
+            // Modern colors
+            UIManager.put("Button.background", Color.WHITE);
+            UIManager.put("Button.foreground", TEXT_COLOR);
+            UIManager.put("Button.select", HOVER_COLOR);
+            
+            UIManager.put("ComboBox.background", Color.WHITE);
+            UIManager.put("ComboBox.foreground", TEXT_COLOR);
+            UIManager.put("ComboBox.selectionBackground", SELECTED_COLOR);
+            UIManager.put("ComboBox.selectionForeground", SELECTED_TEXT_COLOR);
+            
+            UIManager.put("List.background", Color.WHITE);
+            UIManager.put("List.foreground", TEXT_COLOR);
+            UIManager.put("List.selectionBackground", SELECTED_COLOR);
+            UIManager.put("List.selectionForeground", SELECTED_TEXT_COLOR);
+            
+            UIManager.put("TextField.background", Color.WHITE);
+            UIManager.put("TextField.foreground", TEXT_COLOR);
+            UIManager.put("TextField.caretForeground", ACCENT_COLOR);
+            
+            UIManager.put("TextArea.background", Color.WHITE);
+            UIManager.put("TextArea.foreground", TEXT_COLOR);
+            UIManager.put("TextArea.caretForeground", ACCENT_COLOR);
+            
+            SwingUtilities.updateComponentTreeUI(this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private JTextField createModernTextField() {
+        JTextField field = new JTextField();
+        field.setFont(MAIN_FONT);
+        field.setForeground(TEXT_COLOR);
+        field.setBackground(Color.WHITE);
+        field.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(8, 12, 8, 12)
+        ));
+        field.setPreferredSize(new Dimension(field.getWidth(), COMPONENT_HEIGHT));
+        return field;
+    }
+
+    private JTextArea createModernTextArea() {
+        JTextArea area = new JTextArea();
+        area.setFont(MAIN_FONT);
+        area.setForeground(TEXT_COLOR);
+        area.setBackground(Color.WHITE);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        return area;
+    }
+
+    private JButton createModernButton(String text, String icon, ActionListener listener) {
+        JButton button = new JButton(icon + " " + text);
+        button.setFont(BUTTON_FONT);
+        button.setForeground(TEXT_COLOR);
+        button.setBackground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(8, 16, 8, 16)
+        ));
+        button.setPreferredSize(new Dimension(button.getWidth(), COMPONENT_HEIGHT));
+        
+        // Add hover effect
+        button.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(HOVER_COLOR);
+            }
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(Color.WHITE);
+            }
+        });
+        
+        button.addActionListener(listener);
+        return button;
+    }
+
+    private JPanel createModernPanel() {
+        JPanel panel = new JPanel();
+        panel.setBackground(BACKGROUND_COLOR);
+        panel.setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
+        return panel;
+    }
+
+    private JScrollPane createModernScrollPane(Component view) {
+        JScrollPane scrollPane = new JScrollPane(view);
+        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        return scrollPane;
+    }
+
+    private JComboBox<String> createModernComboBox(String[] items) {
+        JComboBox<String> comboBox = new JComboBox<>(items);
+        comboBox.setFont(MAIN_FONT);
+        comboBox.setBackground(Color.WHITE);
+        comboBox.setForeground(TEXT_COLOR);
+        comboBox.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(8, 12, 8, 12)
+        ));
+        comboBox.setPreferredSize(new Dimension(comboBox.getWidth(), COMPONENT_HEIGHT));
+        return comboBox;
     }
 
     /**
      * Sets up the graphical user interface components and layout
      */
     private void setupUI() {
-        // Basic window setup
-        setTitle("Note Taking App");
-        setSize(800, 600);
+        setTitle("Modern Note Taking App");
+        setSize(1200, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(0, 0));
+        getContentPane().setBackground(BACKGROUND_COLOR);
 
-        // Initialize UI components
-        titleField = new JTextField();
-        noteArea = new JTextArea();
-        searchField = new JTextField();
+        initializeComponents();
+        
+        JPanel mainPanel = createModernPanel();
+        mainPanel.setLayout(new BorderLayout(PADDING, PADDING));
+
+        // Left panel with shadow
+        JPanel leftPanel = createModernPanel();
+        leftPanel.setLayout(new BorderLayout(PADDING, PADDING));
+        leftPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING)
+        ));
+        leftPanel.add(createSearchPanel(), BorderLayout.NORTH);
+        leftPanel.add(createCategoryPanel(), BorderLayout.CENTER);
+        leftPanel.add(createModernScrollPane(noteList), BorderLayout.SOUTH);
+
+        // Center panel with shadow
+        JPanel centerPanel = createModernPanel();
+        centerPanel.setLayout(new BorderLayout(PADDING, PADDING));
+        centerPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING)
+        ));
+        centerPanel.add(createTitlePanel(), BorderLayout.NORTH);
+        centerPanel.add(createModernScrollPane(noteArea), BorderLayout.CENTER);
+
+        // Right panel with shadow
+        JPanel rightPanel = createModernPanel();
+        rightPanel.setLayout(new BorderLayout(PADDING, PADDING));
+        rightPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING)
+        ));
+        rightPanel.add(createActionButtons(), BorderLayout.CENTER);
+        rightPanel.add(createDateLabel(), BorderLayout.SOUTH);
+
+        mainPanel.add(leftPanel, BorderLayout.WEST);
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
+        mainPanel.add(rightPanel, BorderLayout.EAST);
+        mainPanel.add(createStatusBar(), BorderLayout.SOUTH);
+
+        add(mainPanel);
+        setJMenuBar(createModernMenuBar());
+        setLocationRelativeTo(null);
+        setMinimumSize(new Dimension(1000, 700));
+    }
+
+    private void initializeComponents() {
+        titleField = createModernTextField();
+        noteArea = createModernTextArea();
+        searchField = createModernTextField();
         dateLabel = new JLabel();
+        statusLabel = new JLabel("Ready");
         listModel = new DefaultListModel<>();
         noteList = new JList<>(listModel);
-        JScrollPane noteScrollPane = new JScrollPane(noteArea);  // Scrollable note area
-        JScrollPane listScrollPane = new JScrollPane(noteList);  // Scrollable note list
+        categoryComboBox = createModernComboBox(CATEGORIES);
+        
+        // Initialize formatting buttons
+        boldButton = new JButton("B");
+        italicButton = new JButton("I");
+        underlineButton = new JButton("U");
+        
+        // Style the buttons
+        styleFormatButtons();
+    }
 
-        // Create control buttons
-        JButton saveButton = new JButton("Save");
-        JButton newButton = new JButton("New");
-        JButton deleteButton = new JButton("Delete");
-        JButton searchButton = new JButton("Search");
+    private void styleFormatButtons() {
+        Font boldFont = new Font("Arial", Font.BOLD, 12);
+        Font italicFont = new Font("Arial", Font.ITALIC, 12);
+        Font underlineFont = new Font("Arial", Font.PLAIN, 12);
+        
+        boldButton.setFont(boldFont);
+        italicButton.setFont(italicFont);
+        underlineButton.setFont(underlineFont);
+        
+        Dimension buttonSize = new Dimension(30, 30);
+        boldButton.setPreferredSize(buttonSize);
+        italicButton.setPreferredSize(buttonSize);
+        underlineButton.setPreferredSize(buttonSize);
+    }
 
-        // Setup title panel at the top
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(new JLabel("Title: "), BorderLayout.WEST);
-        topPanel.add(titleField, BorderLayout.CENTER);
+    private JPanel createSearchPanel() {
+        JPanel panel = createModernPanel();
+        panel.setLayout(new BorderLayout(PADDING, 0));
+        
+        JLabel searchIcon = new JLabel("🔍");
+        searchIcon.setFont(MAIN_FONT);
+        searchField = createModernTextField();
+        
+        panel.add(searchIcon, BorderLayout.WEST);
+        panel.add(searchField, BorderLayout.CENTER);
+        return panel;
+    }
 
-        // Setup search panel
-        JPanel searchPanel = new JPanel(new BorderLayout());
-        searchPanel.add(new JLabel("Search: "), BorderLayout.WEST);
-        searchPanel.add(searchField, BorderLayout.CENTER);
-        searchPanel.add(searchButton, BorderLayout.EAST);
+    private JPanel createCategoryPanel() {
+        JPanel panel = createModernPanel();
+        panel.setLayout(new BorderLayout(PADDING, 0));
+        
+        JLabel categoryLabel = new JLabel("Category:");
+        categoryLabel.setFont(MAIN_FONT);
+        categoryComboBox = createModernComboBox(CATEGORIES);
+        
+        panel.add(categoryLabel, BorderLayout.WEST);
+        panel.add(categoryComboBox, BorderLayout.CENTER);
+        return panel;
+    }
 
-        // Setup button panel at the bottom
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(newButton);
-        buttonPanel.add(saveButton);
-        buttonPanel.add(deleteButton);
+    private JPanel createTitlePanel() {
+        JPanel panel = createModernPanel();
+        panel.setLayout(new BorderLayout(PADDING, 0));
+        
+        JLabel titleLabel = new JLabel("Title:");
+        titleLabel.setFont(MAIN_FONT);
+        titleField = createModernTextField();
+        
+        panel.add(titleLabel, BorderLayout.WEST);
+        panel.add(titleField, BorderLayout.CENTER);
+        return panel;
+    }
 
-        // Add all panels to the main window
-        add(topPanel, BorderLayout.NORTH);
-        add(searchPanel, BorderLayout.SOUTH);
-        add(noteScrollPane, BorderLayout.CENTER);
-        add(listScrollPane, BorderLayout.WEST);
-        add(buttonPanel, BorderLayout.EAST);
-        add(dateLabel, BorderLayout.SOUTH);
+    private JPanel createActionButtons() {
+        JPanel panel = createModernPanel();
+        panel.setLayout(new GridLayout(5, 1, PADDING, PADDING));
+        
+        panel.add(createModernButton("New Note", "➕", e -> newNote()));
+        panel.add(createModernButton("Save", "💾", e -> saveNote()));
+        panel.add(createModernButton("Delete", "🗑️", e -> deleteNote()));
+        panel.add(createModernButton("Export", "📤", e -> exportNote()));
+        panel.add(createModernButton("Import", "📥", e -> importNote()));
+        
+        return panel;
+    }
 
-        // Add event listeners for buttons and note selection
-        saveButton.addActionListener(e -> saveNote());
-        newButton.addActionListener(e -> newNote());
-        deleteButton.addActionListener(e -> deleteNote());
-        searchButton.addActionListener(e -> searchNotes());
-        searchField.addKeyListener(new KeyAdapter() {
-            public void keyReleased(KeyEvent e) {
-                searchNotes();
-            }
-        });
-        noteList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                loadSelectedNote();
-            }
-        });
+    private JLabel createDateLabel() {
+        dateLabel = new JLabel();
+        dateLabel.setFont(MAIN_FONT.deriveFont(Font.ITALIC));
+        dateLabel.setForeground(TEXT_COLOR);
+        dateLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        return dateLabel;
+    }
 
-        // Create the notes directory if it doesn't exist
-        new File(NOTES_DIR).mkdirs();
+    private JPanel createStatusBar() {
+        JPanel panel = createModernPanel();
+        panel.setLayout(new BorderLayout());
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER_COLOR),
+            BorderFactory.createEmptyBorder(8, PADDING, 8, PADDING)
+        ));
+        
+        statusLabel = new JLabel("Ready");
+        statusLabel.setFont(MAIN_FONT);
+        statusLabel.setForeground(TEXT_COLOR);
+        panel.add(statusLabel, BorderLayout.WEST);
+        
+        return panel;
+    }
+
+    private JMenuBar createModernMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.setBackground(BACKGROUND_COLOR);
+        menuBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR));
+        
+        // File menu
+        JMenu fileMenu = new JMenu("File");
+        fileMenu.setFont(MAIN_FONT);
+        fileMenu.add(createModernMenuItem("New Note", "Ctrl+N", KeyEvent.VK_N, e -> newNote()));
+        fileMenu.add(createModernMenuItem("Save", "Ctrl+S", KeyEvent.VK_S, e -> saveNote()));
+        fileMenu.add(createModernMenuItem("Delete", "Ctrl+D", KeyEvent.VK_D, e -> deleteNote()));
+        fileMenu.addSeparator();
+        fileMenu.add(createModernMenuItem("Exit", "Alt+F4", KeyEvent.VK_F4, e -> System.exit(0)));
+        
+        // Edit menu
+        JMenu editMenu = new JMenu("Edit");
+        editMenu.setFont(MAIN_FONT);
+        editMenu.add(createModernMenuItem("Cut", "Ctrl+X", KeyEvent.VK_X, e -> noteArea.cut()));
+        editMenu.add(createModernMenuItem("Copy", "Ctrl+C", KeyEvent.VK_C, e -> noteArea.copy()));
+        editMenu.add(createModernMenuItem("Paste", "Ctrl+V", KeyEvent.VK_V, e -> noteArea.paste()));
+        
+        // View menu
+        JMenu viewMenu = new JMenu("View");
+        viewMenu.setFont(MAIN_FONT);
+        viewMenu.add(createModernMenuItem("Zoom In", "Ctrl++", KeyEvent.VK_PLUS, e -> zoomIn()));
+        viewMenu.add(createModernMenuItem("Zoom Out", "Ctrl+-", KeyEvent.VK_MINUS, e -> zoomOut()));
+        
+        menuBar.add(fileMenu);
+        menuBar.add(editMenu);
+        menuBar.add(viewMenu);
+        
+        return menuBar;
+    }
+
+    private JMenuItem createModernMenuItem(String text, String accelerator, int keyCode, ActionListener listener) {
+        JMenuItem item = new JMenuItem(text);
+        item.setFont(MAIN_FONT);
+        item.setAccelerator(KeyStroke.getKeyStroke(keyCode, InputEvent.CTRL_DOWN_MASK));
+        item.addActionListener(listener);
+        return item;
+    }
+
+    private void zoomIn() {
+        Font currentFont = noteArea.getFont();
+        noteArea.setFont(currentFont.deriveFont((float) (currentFont.getSize() + 2)));
+        statusLabel.setText("Zoom: " + (currentFont.getSize() + 2) + "%");
+    }
+
+    private void zoomOut() {
+        Font currentFont = noteArea.getFont();
+        if (currentFont.getSize() > 8) {
+            noteArea.setFont(currentFont.deriveFont((float) (currentFont.getSize() - 2)));
+            statusLabel.setText("Zoom: " + (currentFont.getSize() - 2) + "%");
+        }
     }
 
     /**
@@ -238,6 +558,39 @@ public class NoteApp extends JFrame {
             writer.write(note.getContent());
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void exportNote() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Text Files", "txt"));
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try (PrintWriter writer = new PrintWriter(fileChooser.getSelectedFile())) {
+                writer.println("Title: " + titleField.getText());
+                writer.println("Date: " + dateLabel.getText());
+                writer.println("\nContent:\n" + noteArea.getText());
+                statusLabel.setText("Note exported successfully");
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error exporting note: " + e.getMessage());
+            }
+        }
+    }
+
+    private void importNote() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Text Files", "txt"));
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(fileChooser.getSelectedFile()))) {
+                StringBuilder content = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append("\n");
+                }
+                noteArea.setText(content.toString());
+                statusLabel.setText("Note imported successfully");
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error importing note: " + e.getMessage());
+            }
         }
     }
 
