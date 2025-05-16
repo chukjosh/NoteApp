@@ -23,7 +23,7 @@ A modern, lightweight note-taking application built with Java Swing.
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/NoteApp.git
+   git clone https://github.com/chukjosh/NoteApp.git
    ```
 
 2. Navigate to the project directory:
