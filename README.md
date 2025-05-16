@@ -2,7 +2,7 @@
 
 A modern, lightweight note-taking application built with Java Swing.
 
-![NoteApp Screenshot](https://via.placeholder.com/800x450.png?text=NoteApp+Screenshot)
+![NoteApp Screenshot]([https://via.placeholder.com/800x450.png?text=NoteApp+Screenshot](https://github.com/chukjosh/NoteApp/tree/main/screenshot/NoteApp.png))
 
 ## Features
 
