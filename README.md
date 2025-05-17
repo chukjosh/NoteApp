@@ -36,9 +36,19 @@ A modern, lightweight note-taking application built with Java Swing.
    javac src/*.java
    ```
 
-4. Run the application:
+4. Create a manifest file:
    ```
-   java src.NoteApp
+   echo "Main-Class: src.NoteApp" > manifest.txt
+   ```
+
+5. Create a JAR file:
+   ```
+   jar cvfm NoteApp.jar manifest.txt src/*.class
+   ```
+
+6. Run the application:
+   ```
+   java -jar NoteApp.jar
    ```
 
 ## Usage

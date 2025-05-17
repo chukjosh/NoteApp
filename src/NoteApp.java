@@ -643,7 +643,7 @@ public class NoteApp extends JFrame {
         JPanel panel = createModernPanel();
         panel.setLayout(new BorderLayout(PADDING, 0));
         
-        JLabel searchIcon = new JLabel("🔍");
+        JLabel searchIcon = new JLabel("Search:");
         searchIcon.setFont(MAIN_FONT);
         searchField = new JTextField();
         searchField.setFont(MAIN_FONT);
