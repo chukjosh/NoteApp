@@ -126,4 +126,4 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 ## Acknowledgements
 
 - Java Swing for the GUI components
-- Inspired by modern note-taking applications 
+- Inspired by modern note-taking applications
