@@ -71,7 +71,6 @@ A modern, lightweight note-taking application built with Java Swing.
 ### Searching Notes
 1. Type your search query in the search field
 2. The note list will automatically filter to show matching notes
-3. Press `Escape` to clear the search
 
 ### Keyboard Shortcuts
 - `Ctrl+N`: Create a new note
